@@ -8,77 +8,46 @@
 
 import UIKit
 
-class ViewController: UIViewController, XMLParserDelegate, UITableViewDelegate, UITableViewDataSource{
-    @IBOutlet weak var ivIcoCurrent: UIImageView!
+class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource{
     
-    @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var ivIcoCurrent: UIImageView!
     @IBOutlet weak var lblPronoCurrent: UILabel!
     @IBOutlet weak var lblTempCuerrent: UILabel!
     @IBOutlet weak var lblPPCurrent: UILabel!
     
-    var parser = XMLParser()        // Parseador
-    var dias = [[String:String]]()      // Array de diccionario dias
-    var dia = [String:String]()     // Diccionario dia
-    var nodo = ""
-    var currentIco:String = ""
-    var currentPro = String()
-    var currentTem = String()
-    var currentPre = String()
-    var isWeather : Bool = false
-    var isCurrent : Bool = false
-
+    @IBOutlet weak var tableView: UITableView!
+    
+    var result:Result!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
-        let  urlTxt="http://api.worldweatheronline.com/premium/v1/weather.ashx?key=d31d55472f974dacb06200547202101&q=Toledo,Spain&num_of_days=10&fx24=yes&lang=es&mca=no&tp=24&format=xml"
-        let url = URL(string: urlTxt)
-        parser = XMLParser(contentsOf:(url)!)!
-        parser.delegate = self
-        parser.parse()
-        pintaCurrent()
+        jsonDecoding()
     }
     
-    // Metodos del Parser
-    
-    func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String : String]) {
-        if elementName == "current_condition" {
-            isCurrent = true
-        }else if elementName == "weather" {
-            isWeather = true
-            dia = [String:String]()
-        }
-    }
+    func jsonDecoding() {
+        
+        // Ejemplo del uso de Codable Protocol para parsear un JSON
+        // Para ello hemos implementado las clases adecuadas en Result.swift
+        let  urlTxt="http://api.worldweatheronline.com/premium/v1/weather.ashx?key=d31d55472f974dacb06200547202101&q=Toledo,Spain&num_of_days=10&fx24=yes&lang=es&mca=no&tp=24&format=json"
 
-    func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
-        if elementName == "current_condition" {
-            isCurrent = false
-        }else if elementName == "weather" {
-            isWeather = false
-            dias.append(dia)
-        }else if isCurrent && elementName == "weatherIconUrl" {
-            currentIco = nodo
-        }else if isCurrent && elementName == "weatherDesc" {
-            currentPro = nodo
-        }else if isCurrent && elementName == "temp_C" {
-            currentTem = nodo
-        }else if isCurrent && elementName == "precipMM" {
-            currentPre = nodo
-        }else if isWeather && elementName == "weatherIconUrl" {
-            dia["ico"] = nodo
-        }else if isWeather && elementName == "weatherDesc" {
-            dia["prono"] = nodo
-        }else if isWeather && elementName == "mintempC" {
-            dia["min"] = nodo
-        }else if isWeather && elementName == "maxtempC" {
-            dia["max"] = nodo
-        }else if isWeather && elementName == "precipMM" {
-            dia["pre"] = nodo
-        }
-    }
-
-    func parser(_ parser: XMLParser, foundCharacters string: String) {
-        nodo = string
+        guard let url = URL(string: urlTxt) else {return}
+        URLSession.shared.dataTask(with: url) { (data, response, err) in
+            guard let data = data else {return}
+            do {
+                self.result =  try JSONDecoder().decode(Result.self, from: data)
+            } catch let jsonErr {
+                print("Error serializing json", jsonErr)
+            }
+            // Como estamos en un hilo, IOS no nos deja
+            // pintar desde el. Solo desde el main thread
+            // es por ello que encerramos el actualizar la UI
+            // en un bloque DispatchQueue.main.async
+            DispatchQueue.main.async {
+                self.pintaCurrent()
+                self.tableView.reloadData()
+            }
+        }.resume()
+            
     }
     
     // Metodos del TableView
@@ -86,21 +55,28 @@ class ViewController: UIViewController, XMLParserDelegate, UITableViewDelegate, 
         return 1
     }
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return dias.count
+        if let n = result?.datos?.weather?.count{
+            return n
+        }
+        return 0
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let celda = tableView.dequeueReusableCell(withIdentifier: "celdaID", for: indexPath) as! MiCelda
-        let dia = dias[indexPath.row]
+        let dia = result?.datos?.weather![indexPath.row]
         // ico
-        let url = URL(string: dia["ico"]!)
+        let url = URL(string: (dia?.hourly![0].icon![0].value)!)
         let data = try? Data(contentsOf: url!)
         celda.ivIcoCalda.image = UIImage(data: data!)
         // resto
-        celda.lblPronoCelda.text = dia["prono"]
-        celda.lblMaxCelda.text = "\(dia["max"]!)º"
-        celda.lblMinCelda.text = "\(dia["min"]!)º"
-        celda.lblPreCelda.text = "\(dia["pre"]!)%"
+        let prono = dia?.hourly![0].prono![0].value
+        celda.lblPronoCelda.text = prono!
+        let max = dia?.max
+        celda.lblMaxCelda.text = "\(max!)º"
+        let min = dia?.min
+        celda.lblMaxCelda.text = "\(min!)º"
+        let pre = dia?.hourly![0].preci
+        celda.lblPreCelda.text = "\(pre!)%"
         
         return celda
     }
@@ -108,12 +84,22 @@ class ViewController: UIViewController, XMLParserDelegate, UITableViewDelegate, 
     // Vistas
     
     func pintaCurrent(){
-        let url = URL(string: currentIco)
+        let current = result?.datos?.current![0]
+        let url = URL(string: (current?.icon![0].value)!)
+        
+        // Normalmente debemos encerrar la bajada de la image
+        // entre un DispatchQueue.main.async
+        // Aquí no lo hacemos porqur todo el método es llamado
+        // en un bloque DispatchQueue.main.async
+        
         let data = try? Data(contentsOf: url!)
         ivIcoCurrent.image = UIImage(data: data!)
-        lblPronoCurrent.text = currentPro
-        lblTempCuerrent.text = "\(currentTem)º"
-        lblPPCurrent.text = "\(currentPre)%"
+        let prono = current!.prono![0].value
+        lblPronoCurrent.text = prono!
+        let temp = current!.temp
+        lblTempCuerrent.text = "\(temp!)º"
+        let pre = current!.pre
+        lblPPCurrent.text = "\(pre!)%"
     }
 }
 

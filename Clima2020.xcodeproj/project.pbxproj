@@ -16,6 +16,7 @@
 		2A158ABE23D84DC700312F30 /* Clima2020Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A158ABD23D84DC700312F30 /* Clima2020Tests.swift */; };
 		2A158AC923D84DC700312F30 /* Clima2020UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A158AC823D84DC700312F30 /* Clima2020UITests.swift */; };
 		2A158AD723D852A900312F30 /* MiCelda.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A158AD623D852A900312F30 /* MiCelda.swift */; };
+		2A91DD9B23DB0CE0002444C3 /* Result.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A91DD9A23DB0CE0002444C3 /* Result.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,6 +52,7 @@
 		2A158AC823D84DC700312F30 /* Clima2020UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clima2020UITests.swift; sourceTree = "<group>"; };
 		2A158ACA23D84DC700312F30 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2A158AD623D852A900312F30 /* MiCelda.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiCelda.swift; sourceTree = "<group>"; };
+		2A91DD9A23DB0CE0002444C3 /* Result.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Result.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,6 +103,7 @@
 		2A158AA523D84DC500312F30 /* Clima2020 */ = {
 			isa = PBXGroup;
 			children = (
+				2A91DD9A23DB0CE0002444C3 /* Result.swift */,
 				2A158AA623D84DC500312F30 /* AppDelegate.swift */,
 				2A158AA823D84DC500312F30 /* SceneDelegate.swift */,
 				2A158AAA23D84DC500312F30 /* ViewController.swift */,
@@ -263,6 +266,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2A158AAB23D84DC500312F30 /* ViewController.swift in Sources */,
+				2A91DD9B23DB0CE0002444C3 /* Result.swift in Sources */,
 				2A158AA723D84DC500312F30 /* AppDelegate.swift in Sources */,
 				2A158AA923D84DC500312F30 /* SceneDelegate.swift in Sources */,
 				2A158AD723D852A900312F30 /* MiCelda.swift in Sources */,
